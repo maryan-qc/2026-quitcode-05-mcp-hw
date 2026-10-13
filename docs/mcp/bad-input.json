@@ -1,0 +1,9 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "Input validation error: Invalid arguments for tool leaddesk_set_lead_status: leadId: Ідентифікатор ліда має формат lead_0001: lead_ і чотири цифри, reason: Too small: expected string to have >=3 characters"
+    }
+  ],
+  "isError": true
+}
