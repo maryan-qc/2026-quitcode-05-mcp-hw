@@ -1,0 +1,27 @@
+# Знімок «після»: інструменти сервера playwright з п'ятьма deny для playwright у .claude/settings.json
+# Нова сесія Claude Code 2.1.296 (Agent SDK), Opus 5.5, effort xhigh; підключено лише playwright
+# Запит: «Перелічи всі інструменти сервера playwright, які тобі зараз доступні. Нічого не викликай.»
+# Відповідь агента: «Сервер playwright зараз дає 21 інструмент» — по інструменту на рядок
+# (агент згрупував їх за призначенням; тут у його ж порядку):
+browser_navigate
+browser_navigate_back
+browser_tabs
+browser_close
+browser_resize
+browser_snapshot
+browser_take_screenshot
+browser_find
+browser_console_messages
+browser_network_requests
+browser_network_request
+browser_wait_for
+browser_click
+browser_hover
+browser_drag
+browser_type
+browser_press_key
+browser_fill_form
+browser_select_option
+browser_handle_dialog
+browser_emulate_media
+# Разом 21 проти 25 у mcp-before.txt; що саме зникло — docs/mcp/connections.md
