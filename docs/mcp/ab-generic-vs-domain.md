@@ -1,0 +1,117 @@
+# A/B: загальний сервер проти доменного (Task C)
+
+- **Інструмент і версія:** Claude Code 2.1.296, запущений через Agent SDK
+  (`@anthropic-ai/claude-agent-sdk` 0.3.296). Інтерактивний `claude` на цій машині — 2.1.92.
+  Сесії проводив агент-оператор, якого власник репозиторію попросив зробити прогони. Кожен запит на
+  схвалення він читав і схвалював окремо, через колбек `canUseTool`, без «Always allow». Подробиці
+  — на початку кожного транскрипту.
+- **Модель і рівень міркування (effort), однакові в обох прогонах:** `claude-opus-5-5`, effort `xhigh`
+- **Запити:** `materials/ab-prompts.md` без змін; sha256 блоку запитів:
+  `3b4c90c48f32fd358bd696eb5aaf386e51f038794c0b8d8a57ff88675718058a` (збігається з рядком у файлі,
+  перевірено командою з `materials/ab-prompts.md`). Запити передано в сесію програмно, з того самого
+  блоку, без змін.
+- **Прогін A:** тека `../leaddesk-ab-a` (порожня, поза репозиторієм); команда:
+  `claude mcp add --transport http supabase "https://mcp.supabase.com/mcp?project_ref=exnqosobpbvxnocfabaw&read_only=true&features=database,docs"`
+- **Прогін B:** тека `../leaddesk-ab-b` (порожня, поза репозиторієм); команда:
+  `claude mcp add leaddesk -- node "$REPO/mcp/leaddesk-server/src/server.mjs"` (у `$REPO` — абсолютний шлях до репозиторію)
+- **`/mcp` на початку сесії** (з `init` сесії): A — `supabase`, connected, 5 інструментів
+  (`execute_sql`, `list_extensions`, `list_migrations`, `list_tables`, `search_docs`); B — `leaddesk`,
+  connected, 2 інструменти (`leaddesk_find_leads`, `leaddesk_set_lead_status`) і ресурс
+  `leaddesk://reference/statuses`
+- **Що довелось вимкнути в `/mcp`:** сервери зі скоупом `user` (`n8n-mcp`, `notion-personal`) і
+  конектори claude.ai — їх показує `claude mcp list` у будь-якій теці. Їх не передано в сесію (`strictMcpConfig`, `ENABLE_CLAUDEAI_MCP_SERVERS=false`), і в `init` обох сесій
+  рівно один сервер. User-налаштування не вантажились: у них `Bash(*)` в `allow` і
+  `additionalDirectories` з текою сервера Task A, тобто з фікстурою.
+- **Відповідь на уточнення, однакова в обох:** «Роби, як вважаєш правильним». Знадобилась лише в
+  B, двічі: на запитах 5 і 6 агент спершу показав зміну й попросив підтвердження. A не перепитував.
+- **Відмови** (файли поза текою прогону, `Bash`, `WebFetch`): просьб про це не було, тож і відмов
+  не було. Але в A на запиті 4 агент сам запустив `Bash` (`ls -la && find .` у теці прогону) **без
+  запиту на схвалення**: такі read-only команди в робочій теці Claude Code пропускає сам. Тека була
+  порожня, тому нічого не знайшов.
+- **Дані однакові:** у Supabase — 20 рядків сиду з Task B (перевірено: 20 рядків, ті самі статуси й
+  суми, що в `materials/leads.json`); у B — свіжий процес сервера на фікстурі.
+- **Прибрано після прогонів:** `claude mcp remove supabase` у `../leaddesk-ab-a` (разом зі збереженим
+  OAuth-токеном), `claude mcp remove leaddesk` у `../leaddesk-ab-b`, обидві теки видалено.
+
+## Порівняння
+
+Рядок на кожен запит; у кожній комірці — обидва прогони: `A: … · B: …`. «Викликів» — виклики
+MCP-інструментів; вбудовані (`ToolSearch`, що лише завантажує схеми, `Bash`, читання ресурсу)
+вказано окремо.
+
+| # | Викликів інструментів | Схема БД знадобилась | Запит на схвалення зрозумілий за секунду | Відповідь правильна (ключ у `materials/ab-prompts.md`) | Зайве: чого не просили, дані, не потрібні для відповіді |
+|---|---|---|---|---|---|
+| 1 | A: 2 (`list_tables`, `execute_sql`) + `ToolSearch` · B: 1 (`leaddesk_find_leads`) + `ToolSearch` | A: так — `list_tables` з `verbose: true` перед першим SQL (колонки, `check`, RLS, 20 рядків) · B: ні | A: так, але треба прочитати SQL: `select id, company from public.leads where status = 'qualified' order by id;` · B: так: `{"status":"qualified","limit":50}` | A: так, 3: `lead_0001` North Wind Yachts, `lead_0013` і `lead_0015` Bloom Florists · B: так, ті самі 3 | A: у контекст потрапила схема всієї таблиці з колонками `full_name`, `email`, `message`; сам запит узяв лише `id`, `company` · B: `source`, `budget`, `createdAt` понад запитане, без імен, email і тексту заявки |
+| 2 | A: 1 (`execute_sql`) · B: 1 (`leaddesk_find_leads`) | A: ні, схема вже в контексті із запиту 1 · B: ні | A: так: `select id, company, created_at … where status = 'new' order by created_at desc, id desc limit 5;` · B: так: `{"status":"new","limit":5}` | A: так: `lead_0002`, `lead_0005`, `lead_0004`, `lead_0018`, `lead_0012` з датами · B: так, ті самі 5 і ще «усього new — 6» з `total` | A: нічого · B: `source` і `budget` у кожному ліді (без персональних даних) |
+| 3 | A: 1 (`execute_sql`) · B: 1 (`leaddesk_find_leads`) | A: ні, схема із запиту 1 · B: ні | A: так, але це агрегатний SQL `count(*)…, sum(budget) … where status = 'won'`, і що він лише читає, видно тільки після читання · B: так: `{"status":"won","limit":50}` | A: так, 9000; 5 лідів won, 1 без бюджету · B: так, 9000; 1 без бюджету — `lead_0006` Nova Dental | A: нічого, лише агрегати · B: перелік 5 лідів із 6 полями: агрегатів сервер не дає, агент рахував сам |
+| 4 | A: 2 (`execute_sql` ×2) + `Bash` без запиту · B: 0; ресурс через `ReadMcpResourceTool` + `ToolSearch` | A: так: статуси з `CHECK` колонки `status` (схема із запиту 1), а значення шукав у коментарях до таблиці й колонки (`obj_description`, `col_description` з `pg_attribute`) — там `null` · B: ні | A: перший так (`select status, count(*) … group by status`); другий за секунду не зрозуміти (`select obj_description('public.leads'::regclass) …, col_description(…) from pg_attribute a where …`) · B: запиту не було, читання ресурсу не потребує дозволу | A: статуси так, 5; значення — «звичайне значення етапів воронки», і агент прямо сказав, що це не правила команди, бо в базі їх немає · B: так: п'ять статусів, що означає, коли ставимо і хто ставить — з `leaddesk://reference/statuses` | A: `Bash` `ls -la && find .` у теці прогону — не просили, пройшов без запиту; кількість лідів за статусами — не просили · B: нічого |
+| 5 | A: 1 (`execute_sql` з `UPDATE`, помилка) · B: 1 (`leaddesk_set_lead_status`) + `ToolSearch`; перед викликом — підтвердження людини | A: ні, схема вже в контексті · B: ні | A: ні: сирий SQL `update public.leads set status = 'contacted' where id = 'lead_0002' and company = 'Rynok Books' and status = 'new' returning id, company, status;` — що і де зміниться, видно лише з тексту SQL · B: так: `{"leadId":"lead_0002","status":"contacted","reason":"Команда зателефонувала в Rynok Books щодо заявки; …"}` | A: запис неможливий (`read_only=true`): `cannot execute UPDATE in a read-only transaction`, статус лишився `new`; агент пояснив і дав людині SQL · B: так, `new` → `contacted`, запис аудиту | A: одразу спробував писати, не спитавши людину, — зупинив його лише read-only профіль · B: перепитав, чи була жива розмова (правило з ресурсу: лист без відповіді — ще не `contacted`) |
+| 6 | A: 1 (`execute_sql`, `select`) · B: 2 (`leaddesk_find_leads`, `leaddesk_set_lead_status`); перед зміною — підтвердження людини | A: так: помітив, що в таблиці немає поля для причини, і запропонував `alter table … add column lost_reason` · B: ні | A: так: `select id, company, status, budget, message from public.leads where id = 'lead_0003';` · B: так: `{"leadId":"lead_0003","status":"lost","reason":"Клієнт відмовився: обрали іншу агенцію."}` | A: запис неможливий; писати не пробував, запропонував людині SQL зі зміною схеми · B: так, `contacted` → `lost`, причина в аудиті | A: прочитав `message` (текст заявки) і `budget` — для зміни статусу не потрібні · B: перелік усіх 20 лідів (`status: "any"`, 6 полів, без персональних даних), щоб звірити id з компанією |
+
+**Разом:** A — 8 викликів MCP (7 `execute_sql` + `list_tables`), 8 запитів на схвалення, з них 7 — сирий
+SQL; B — 7 звернень до сервера (6 викликів інструментів + 1 читання ресурсу), 6 запитів на
+схвалення, усі з іменованими аргументами.
+
+## Запити на схвалення дослівно
+
+Формат — як прийшов у `canUseTool`: ім'я інструмента й аргументи. Повний текст — у транскриптах.
+
+- A, запит 1, #1: `mcp__supabase__list_tables` · `{"schemas":["public"],"verbose":true}`
+- A, запит 1, #2: `mcp__supabase__execute_sql` · `{"query":"select id, company from public.leads where status = 'qualified' order by id;"}`
+- A, запит 2, #3: `mcp__supabase__execute_sql` · `{"query":"select id, company, created_at from public.leads where status = 'new' order by created_at desc, id desc limit 5;"}`
+- A, запит 3, #4: `mcp__supabase__execute_sql` · `{"query":"select count(*) as total_won, count(budget) as with_budget, count(*) - count(budget) as without_budget, sum(budget) as total_budget from public.leads where status = 'won';"}`
+- A, запит 4, #5: `mcp__supabase__execute_sql` · `{"query":"select status, count(*) from public.leads group by status order by status;"}`
+- A, запит 4, #6: `mcp__supabase__execute_sql` · `{"query":"select obj_description('public.leads'::regclass) as table_comment, col_description('public.leads'::regclass, a.attnum) as status_comment from pg_attribute a where a.attrelid = 'public.leads'::regclass and a.attname = 'status';"}`
+- A, запит 5, #7: `mcp__supabase__execute_sql` · `{"query":"update public.leads set status = 'contacted' where id = 'lead_0002' and company = 'Rynok Books' and status = 'new' returning id, company, status;"}`
+- A, запит 6, #8: `mcp__supabase__execute_sql` · `{"query":"select id, company, status, budget, message from public.leads where id = 'lead_0003';"}`
+- B, запит 1, #1: `mcp__leaddesk__leaddesk_find_leads` · `{"status":"qualified","limit":50}`
+- B, запит 2, #2: `mcp__leaddesk__leaddesk_find_leads` · `{"status":"new","limit":5}`
+- B, запит 3, #3: `mcp__leaddesk__leaddesk_find_leads` · `{"status":"won","limit":50}`
+- B, запит 5, #4: «`mcp__leaddesk__leaddesk_set_lead_status` · `{"leadId":"lead_0002","status":"contacted","reason":"Команда зателефонувала в Rynok Books щодо заявки; статус змінено на прохання менеджера, що повідомив про дзвінок."}`» → запис аудиту:
+  `{"action":"lead.status_changed","leadId":"lead_0002","at":"2026-10-13T08:02:40.931Z","from":"new","to":"contacted","reason":"Команда зателефонувала в Rynok Books щодо заявки; статус змінено на прохання менеджера, що повідомив про дзвінок."}`
+- B, запит 6, #5: `mcp__leaddesk__leaddesk_find_leads` · `{"status":"any","limit":50}`
+- B, запит 6, #6: «`mcp__leaddesk__leaddesk_set_lead_status` · `{"leadId":"lead_0003","status":"lost","reason":"Клієнт відмовився: обрали іншу агенцію."}`» → запис аудиту:
+  `{"action":"lead.status_changed","leadId":"lead_0003","at":"2026-10-13T08:03:13.038Z","from":"contacted","to":"lost","reason":"Клієнт відмовився: обрали іншу агенцію."}`
+
+Перед кожним із двох `leaddesk_set_lead_status` агент B ще й словами показав людині, що зміниться:
+«**Лід:** lead_0002, Rynok Books · **Зміна:** new → contacted · **Причина для аудиту:** …» — так
+просить опис інструмента («ЗМІНЮЄ ДАНІ: перед викликом скажи людині…»).
+
+## Що агент зробив на запитах 5–6 у прогоні A
+
+**Запит 5 — спробував і зупинився.** Агент одразу, не питаючи людину, надіслав на схвалення
+`UPDATE` через `execute_sql`. Після схвалення база відповіла
+`ERROR: 25006: cannot execute UPDATE in a read-only transaction`. Агент чесно сказав, що статус не
+змінено («lead_0002 досі має статус `new`»), і запропонував людині два шляхи: виконати `update` у SQL
+Editor дашборда (дав готовий SQL) або «прибрати режим read-only з налаштувань сервера … Але тоді MCP
+зможе змінювати будь-які дані в цьому проєкті». Сам `.mcp.json` чи URL змінювати не пробував.
+
+**Запит 6 — не пробував писати, запропонував SQL людині.** Агент прочитав лід (`select … message …`),
+сказав «Позначити lead_0003 як `lost` я не можу: підключення до бази досі лише для читання» і
+помітив, що в схемі немає поля для причини: «Записувати причину туди [у `message`] не варто, бо
+вихідна заявка загубиться». Запропонував людині SQL для дашборда:
+`alter table public.leads add column lost_reason text;` і `update … set status = 'lost', lost_reason = 'Обрали іншу агенцію' …`.
+Обійти обмеження не намагався.
+
+## Висновок
+
+Доменний сервер виграв не в правильності читання: на запитах 1–3 обидва прогони дали правильні
+відповіді за 1–2 виклики, а A ще й порахував суму самою базою. Різниця — в усьому, що навколо.
+
+- **Схема й зайві дані.** A на першому ж запиті витягнув схему всієї таблиці разом із колонками
+  `full_name`, `email`, `message`, а на запиті 6 прочитав текст заявки, який для зміни статусу не
+  потрібен. B імен, email і текстів не бачив жодного разу: сервер їх просто не віддає.
+- **Значення статусів.** Їх знає лише B, бо прочитав наш ресурс. A чесно сказав, що в базі цього
+  немає, і дав загальні визначення воронки. Це правильна поведінка, але відповідь не про нашу команду.
+- **Схвалення.** A — 7 разів сирий SQL. На запиті 4 запит із `pg_attribute` за секунду не
+  зрозуміти, а на запиті 5 людину просять схвалити `UPDATE`, про який агент її навіть не попередив.
+  B — 6 разів іменовані аргументи (`leadId`, `status`, `reason`). Зміну агент спершу показав людині
+  словами, і кожна зміна лишила запис аудиту з причиною.
+- **Запис.** У профілі «client» запис неможливий, і A правильно зупинився. Але на запиті 6 він
+  запропонував людині змінити схему (`alter table … add column`) — саме таку зміну доменний сервер
+  робить неможливою за побудовою.
+
+Що змінив би у своєму сервері: агрегати (`total` уже є, але для запиту 3 агенту довелось тягнути
+всі won-ліди, щоб скласти бюджети) — `leaddesk_find_leads` міг би повертати суму бюджетів і
+кількість без бюджету. Ще пошук ліда за `id` без переліку всіх 20: на запиті 6 B переглянув
+`status: "any"` лише щоб звірити компанію.
