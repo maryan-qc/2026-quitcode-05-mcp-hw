@@ -40,7 +40,7 @@
 }
 ```
 
-**Результат:**
+**Результат `ToolSearch`:**
 
 ```
 [завантажено схем інструментів: 1]
@@ -66,7 +66,7 @@
 
 → **схвалено (один раз)**
 
-**Результат:**
+**Результат `mcp__leaddesk__leaddesk_find_leads`:**
 
 ```
 {"status":"qualified","total":3,"returned":3,"leads":[{"id":"lead_0001","company":"North Wind Yachts","status":"qualified","source":"facebook-ads","budget":2500,"createdAt":"2026-09-20T06:32:40.447Z"},{"id":"lead_0013","company":"Bloom Florists","status":"qualified","source":"facebook-ads","budget":1500,"createdAt":"2026-09-07T13:54:42.854Z"},{"id":"lead_0015","company":"Bloom Florists","status":"qualified","source":"website","budget":2500,"createdAt":"2026-08-18T15:29:38.903Z"}]}
@@ -110,7 +110,7 @@ _Кінець ходу: success, 3 кроків моделі, 9.2 с._
 
 → **схвалено (один раз)**
 
-**Результат:**
+**Результат `mcp__leaddesk__leaddesk_find_leads`:**
 
 ```
 {"status":"new","total":6,"returned":5,"leads":[{"id":"lead_0002","company":"Rynok Books","status":"new","source":"webinar","budget":500,"createdAt":"2026-09-13T00:52:02.043Z"},{"id":"lead_0005","company":"Brick & Beam","status":"new","source":"linkedin","budget":500,"createdAt":"2026-09-12T02:42:39.732Z"},{"id":"lead_0004","company":"Green Leaf Market","status":"new","source":"facebook-ads","budget":1500,"createdAt":"2026-08-30T17:46:42.505Z"},{"id":"lead_0018","company":"Green Leaf Market","status":"new","source":"google-ads","budget":null,"createdAt":"2026-07-18T05:08:24.837Z"},{"id":"lead_0012","company":"Lviv Coffee Lab","status":"new","source":"website","budget":null,"createdAt":"2026-07-07T20:23:53.712Z"}]}
@@ -156,7 +156,7 @@ _Кінець ходу: success, 2 кроків моделі, 9.0 с._
 
 → **схвалено (один раз)**
 
-**Результат:**
+**Результат `mcp__leaddesk__leaddesk_find_leads`:**
 
 ```
 {"status":"won","total":5,"returned":5,"leads":[{"id":"lead_0011","company":"Lviv Coffee Lab","status":"won","source":"facebook-ads","budget":5000,"createdAt":"2026-09-11T12:34:50.420Z"},{"id":"lead_0006","company":"Nova Dental","status":"won","source":"linkedin","budget":null,"createdAt":"2026-08-31T21:08:50.351Z"},{"id":"lead_0016","company":"Karpaty Tours","status":"won","source":"google-ads","budget":1000,"createdAt":"2026-07-30T05:49:44.585Z"},{"id":"lead_0010","company":"Artisan Bakery","status":"won","source":"linkedin","budget":2500,"createdAt":"2026-07-20T15:04:37.639Z"},{"id":"lead_0017","company":"Hutsul Crafts","status":"won","source":"webinar","budget":500,"createdAt":"2026-06-27T08:23:09.596Z"}]}
@@ -192,7 +192,7 @@ _Кінець ходу: success, 2 кроків моделі, 8.7 с._
 }
 ```
 
-**Результат:**
+**Результат `ToolSearch`:**
 
 ```
 [завантажено схем інструментів: 1]
@@ -207,7 +207,7 @@ _Кінець ходу: success, 2 кроків моделі, 8.7 с._
 }
 ```
 
-**Результат:**
+**Результат `ReadMcpResourceTool`:**
 
 ```
 {"contents":[{"uri":"leaddesk://reference/statuses","mimeType":"text/markdown","text":"# Статуси лідів LeadDesk\n\nЯк команда Studio Nova веде лід. Звичайний шлях: `new` → `contacted` → `qualified` → `won`;\nу `lost` лід може піти з будь-якого статусу. Статус змінює лише `leaddesk_set_lead_status`, і\nкожна зміна лишає запис в аудиті з причиною. Агент змінює статус тільки на прохання людини й\nпісля її підтвердження.\n\n| Статус | Що означає для команди | Коли ставимо | Хто ставить |\n|---|---|---|---|\n| `new` | Заявка надійшла, живого контакту з клієнтом ще не було | Автоматично, коли лід створено з форми чи імпорту | Система |\n| `contacted` | Була жива розмова: дзвінок, зустріч або відповідь клієнта на наш лист | Одразу після першого контакту. Лист без відповіді — ще не `contacted` | Менеджер, що веде лід |\n| `qualified` | Задача наша, бюджет відомий і в межах, з якими ми працюємо, є людина, що ухвалює рішення, і реальні терміни | Після розмови, де ці чотири пункти підтверджено; далі готуємо кошторис | Менеджер, що веде лід |\n| `won` | Клієнт підписав договір або сплатив передоплату | Лише після підпису чи оплати, не «клієнт усно погодився» | Власник акаунта (роль owner) |\n| `lost` | Угоди не буде: відмова, обрали іншу агенцію, задача чи бюджет не наші, або 30 днів тиші після трьох спроб контакту | Щойно це стало відомо; причину записуємо завжди | Менеджер, що веде лід |\n\nПовернення назад (наприклад, `qualified` → `contacted`) можливе, але лише з причиною.\n"}]}
@@ -245,7 +245,7 @@ _Кінець ходу: success, 3 кроків моделі, 9.2 с._
 }
 ```
 
-**Результат:**
+**Результат `ToolSearch`:**
 
 ```
 [завантажено схем інструментів: 1]
@@ -295,7 +295,7 @@ _Кінець ходу: success, 2 кроків моделі, 10.7 с._
 
 → **схвалено (один раз)**
 
-**Результат:**
+**Результат `mcp__leaddesk__leaddesk_set_lead_status`:**
 
 ```
 {"lead":{"id":"lead_0002","company":"Rynok Books","status":"contacted","source":"webinar","budget":500,"createdAt":"2026-09-13T00:52:02.043Z"},"audit":{"action":"lead.status_changed","leadId":"lead_0002","at":"2026-10-13T08:02:40.931Z","from":"new","to":"contacted","reason":"Команда зателефонувала в Rynok Books щодо заявки; статус змінено на прохання менеджера, що повідомив про дзвінок."}}
@@ -335,7 +335,7 @@ _Кінець ходу: success, 2 кроків моделі, 20.4 с._
 
 → **схвалено (один раз)**
 
-**Результат:**
+**Результат `mcp__leaddesk__leaddesk_find_leads`:**
 
 ```
 {"status":"any","total":20,"returned":20,"leads":[{"id":"lead_0001","company":"North Wind Yachts","status":"qualified","source":"facebook-ads","budget":2500,"createdAt":"2026-09-20T06:32:40.447Z"},{"id":"lead_0002","company":"Rynok Books","status":"contacted","source":"webinar","budget":500,"createdAt":"2026-09-13T00:52:02.043Z"},{"id":"lead_0005","company":"Brick & Beam","status":"new","source":"linkedin","budget":500,"createdAt":"2026-09-12T02:42:39.732Z"},{"id":"lead_0011","company":"Lviv Coffee Lab","status":"won","source":"facebook-ads","budget":5000,"createdAt":"2026-09-11T12:34:50.420Z"},{"id":"lead_0008","company":"Brick & Beam","status":"contacted","source":"website","budget":1500,"createdAt":"2026-09-10T21:30:58.988Z"},{"id":"lead_0013","company":"Bloom Florists","status":"qualified","source":"facebook-ads","budget":1500,"createdAt":"2026-09-07T13:54:42.854Z"},{"id":"lead_0006","company":"Nova Dental","status":"won","source":"linkedin","budget":null,"createdAt":"2026-08-31T21:08:50.351Z"},{"id":"lead_0004","company":"Green Leaf Market","status":"new","source":"facebook-ads","budget":1500,"createdAt":"2026-08-30T17:46:42.505Z"},{"id":"lead_0015","company":"Bloom Florists","status":"qualified","source":"website","budget":2500,"createdAt":"2026-08-18T15:29:38.903Z"},{"id":"lead_0016","company":"Karpaty Tours","status":"won","source":"google-ads","budget":1000,"createdAt":"2026-07-30T05:49:44.585Z"},{"id":"lead_0014","company":"Nova Dental","status":"contacted","source":"facebook-ads","budget":2500,"createdAt":"2026-07-27T20:15:23.380Z"},{"id":"lead_0007","company":"Rynok Books","status":"lost","source":"referral","budget":5000,"createdAt":"2026-07-26T23:16:04.124Z"},{"id":"lead_0020","company":"UrbanFit Studio","status":"lost","source":"referral","budget":2500,"createdAt":"2026-07-24T12:31:19.113Z"},{"id":"lead_0010","company":"Artisan Bakery","status":"won","source":"linkedin","budget":2500,"createdAt":"2026-07-20T15:04:37.639Z"},{"id":"lead_0018","company":"Green Leaf Market","status":"new","source":"google-ads","budget":null,"createdAt":"2026-07-18T05:08:24.837Z"},{"id":"lead_0003","company":"Metro Logistics","status":"contacted","source":"facebook-ads","budget":10000,"createdAt":"2026-07-18T00:14:44.381Z"},{"id":"lead_0012","company":"Lviv Coffee Lab","status":"new","source":"website","budget":null,"createdAt":"2026-07-07T20:23:53.712Z"},{"id":"lead_0019","company":"Svitlo Solar","status":"new","source":"website","budget":500,"createdAt":"2026-06-30T21:07:00.656Z"},{"id":"lead_0009","company":"North Wind Yachts","status":"contacted","source":"webinar","budget":2500,"createdAt":"2026-06-27T14:53:21.060Z"},{"id":"lead_0017","company":"Hutsul Crafts","status":"won","source":"webinar","budget":500,"createdAt":"2026-06-27T08:23:09.596Z"}]}
@@ -379,7 +379,7 @@ _Кінець ходу: success, 2 кроків моделі, 18.1 с._
 
 → **схвалено (один раз)**
 
-**Результат:**
+**Результат `mcp__leaddesk__leaddesk_set_lead_status`:**
 
 ```
 {"lead":{"id":"lead_0003","company":"Metro Logistics","status":"lost","source":"facebook-ads","budget":10000,"createdAt":"2026-07-18T00:14:44.381Z"},"audit":{"action":"lead.status_changed","leadId":"lead_0003","at":"2026-10-13T08:03:13.038Z","from":"contacted","to":"lost","reason":"Клієнт відмовився: обрали іншу агенцію."}}
